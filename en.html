@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IT Survey</title>
+<style>
+:root {
+  --bg: #F7F4EC; --surface: #FFFFFF; --fg: #14213D; --muted: #4A5570;
+  --line: #CFD3DC; --accent: #14213D; --on-accent: #FFFFFF; --mark: #B8860B;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1626; --surface: #18213A; --fg: #EEF1F8; --muted: #B4BCD0;
+    --line: #35405F; --accent: #FFC43D; --on-accent: #14213D; --mark: #FFC43D;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding: 32px max(16px, env(safe-area-inset-right, 0px)) 64px max(16px, env(safe-area-inset-left, 0px));
+}
+main { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; font-weight: 600; text-transform: uppercase; color: var(--mark); }
+h1 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 7vw, 42px); line-height: 1.1; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); max-width: 60ch; }
+.progress { position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 5; display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+.bar { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+h2 { margin: 12px 0 0; font-family: var(--font-display); font-size: 22px; }
+fieldset { margin: 0; padding: 18px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+legend { padding: 0 6px; font-weight: 600; font-size: 16px; max-width: 100%; }
+.hint { margin: -4px 0 2px; font-size: 13px; color: var(--muted); }
+.opt { display: flex; gap: 10px; align-items: center; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opt:hover { border-color: var(--accent); }
+.opt input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; margin: 0; }
+.opt:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.opt:has(input:focus-visible) { outline: 3px solid var(--mark); outline-offset: 2px; }
+textarea { width: 100%; min-height: 96px; padding: 10px 12px; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+textarea:focus-visible, button:focus-visible { outline: 3px solid var(--mark); outline-offset: 2px; }
+.result { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.result h2 { margin: 0; }
+#summary { min-height: 160px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+.actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+button { min-height: 44px; padding: 0 20px; font: inherit; font-weight: 600; color: var(--on-accent); background: var(--accent); border: 0; border-radius: 8px; cursor: pointer; }
+.status { font-size: 14px; color: var(--muted); }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap">
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Short survey · about 4 minutes</div>
+    <h1>How does IT work at your place?</h1>
+    <p class="lead">I'm a business informatics student and I want to understand what really bothers small businesses and clubs about their IT. The questions are click-through. Name and contact are optional. Nothing is sent automatically: at the end you copy the text and send it to me yourself.</p>
+  </header>
+  <div class="progress" aria-live="polite"><div class="bar"><i id="fill"></i></div><span id="count">0 of 11</span></div>
+  <form id="form" autocomplete="off"></form>
+  <section class="result" aria-labelledby="res-h">
+    <h2 id="res-h">Your answers</h2>
+    <p class="note">This text is built from your clicks. You can edit or add to it before copying.</p>
+    <label for="summary" class="note">Text to send</label>
+    <textarea id="summary" spellcheck="false"></textarea>
+    <div class="actions">
+      <button type="button" id="copy">Copy text</button>
+      <span class="status" id="status" role="status"></span>
+    </div>
+    <p class="note">Send the copied text by email or message to the person who gave you this link.</p>
+  </section>
+</main>
+<script>
+var QUESTIONS = [
+  { sec: 'About your organization', id: 'art', type: 'one', q: 'What kind of organization are you?',
+    opts: ['Club or initiative', 'Shop or retail', 'Medical or therapy practice', 'Office, consultancy or studio', 'Something else'] },
+  { id: 'groesse', type: 'one', q: 'How many people work on a computer regularly?',
+    opts: ['1 to 2', '3 to 5', '6 to 10', 'More than 10'] },
+  { sec: 'How IT works today', id: 'kuemmerer', type: 'one', q: 'Who takes care of IT?',
+    opts: ['I do it myself', 'Someone in the team on the side', 'An external provider', 'A friend or acquaintance', 'Nobody, really'] },
+  { id: 'system', type: 'one', q: 'Which system do you use for email and shared files?',
+    opts: ['Microsoft 365', 'Google Workspace', 'Something else', "I don't know"] },
+  { id: 'backup', type: 'one', q: 'Do you have regular data backups?',
+    opts: ['Yes, and we have tested that they work', "Yes, but we haven't tested them", 'No', "I don't know"] },
+  { id: 'zweifaktor', type: 'one', q: 'Does everyone sign in with a second step (two-factor authentication, for example via an app)?',
+    opts: ['Yes, everyone', 'Only some people', 'No', "I don't know what that is"] },
+  { id: 'passwort', type: 'one', q: 'How do you manage passwords?',
+    opts: ['Password manager', 'In our heads or on paper', 'In a shared spreadsheet or file', 'Everyone does it differently'] },
+  { sec: 'What bothers you', id: 'probleme', type: 'multi', q: 'Which of these do you know?', hint: 'You can choose several.',
+    opts: ['Problems take too long to fix', 'Unclear who may access what', 'Fear of losing data', 'Suspicious emails (phishing)', 'Data protection is confusing', 'Setting up new staff is tedious', 'Technical explanations are hard to understand', 'None of these'] },
+  { id: 'nervt', type: 'text', q: 'What bothers you most about IT? (optional)' },
+  { sec: 'If support were available', id: 'preis', type: 'one', q: 'What would monthly IT support be worth to you, roughly?',
+    opts: ['No budget for it', 'Up to €50 per month', '€50 to €100 per month', '€100 to €200 per month', 'More than €200 per month', "I can't say"] },
+  { id: 'wichtig', type: 'multi', q: 'What would matter most in an IT support service?', hint: 'Up to three answers.',
+    opts: ['A fixed, clear price', 'Fast answers when something breaks', 'Plain language', 'Someone comes on site', 'Contracts and data protection are properly handled', 'Documentation of who can access what'] },
+  { id: 'kontakt', type: 'text', q: 'Would you like a free short check of your IT? Then write your name and contact here. (optional)' }
+];
+var state = {};
+var form = document.getElementById('form');
+var summary = document.getElementById('summary');
+var edited = false;
+
+function el(tag, attrs, kids) {
+  var e = document.createElement(tag);
+  Object.keys(attrs || {}).forEach(function (k) { if (k === 'text') e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); });
+  (kids || []).forEach(function (c) { e.appendChild(c); });
+  return e;
+}
+
+QUESTIONS.forEach(function (item) {
+  if (item.sec) form.appendChild(el('h2', { text: item.sec }));
+  var fs = el('fieldset', {});
+  fs.appendChild(el('legend', { text: item.q }));
+  if (item.hint) fs.appendChild(el('p', { class: 'hint', text: item.hint }));
+  if (item.type === 'text') {
+    var ta = el('textarea', { id: 'q-' + item.id, 'aria-label': item.q });
+    ta.addEventListener('input', function () { state[item.id] = ta.value.trim(); update(); });
+    fs.appendChild(ta);
+  } else {
+    item.opts.forEach(function (o, oi) {
+      var inp = el('input', { type: item.type === 'one' ? 'radio' : 'checkbox', name: 'q-' + item.id, id: 'q-' + item.id + '-' + oi, value: o });
+      inp.addEventListener('change', function () {
+        if (item.type === 'one') { state[item.id] = o; }
+        else {
+          var chosen = Array.prototype.slice.call(form.querySelectorAll('input[name="q-' + item.id + '"]:checked'));
+          if (item.id === 'wichtig' && chosen.length > 3) { inp.checked = false; chosen = chosen.filter(function (c) { return c !== inp; }); }
+          state[item.id] = chosen.map(function (c) { return c.value; });
+        }
+        update();
+      });
+      fs.appendChild(el('label', { class: 'opt', for: inp.id }, [inp, el('span', { text: o })]));
+    });
+  }
+  form.appendChild(fs);
+});
+
+function answered(item) {
+  var v = state[item.id];
+  return Array.isArray(v) ? v.length > 0 : !!v;
+}
+
+function buildText() {
+  var lines = ['Answers to the IT survey', ''];
+  QUESTIONS.forEach(function (item) {
+    var v = state[item.id];
+    if (!answered(item)) return;
+    lines.push(item.q.replace(' (optional)', ''));
+    lines.push('→ ' + (Array.isArray(v) ? v.join('; ') : v));
+    lines.push('');
+  });
+  return lines.join('\n').trim();
+}
+
+function update() {
+  var n = QUESTIONS.filter(answered).length;
+  document.getElementById('count').textContent = n + ' of ' + QUESTIONS.length;
+  document.getElementById('fill').style.width = (100 * n / QUESTIONS.length) + '%';
+  if (!edited) summary.value = n ? buildText() : '';
+}
+summary.addEventListener('input', function () { edited = true; });
+summary.setAttribute('placeholder', 'Your answers appear here as soon as you answer questions.');
+
+document.getElementById('copy').addEventListener('click', function () {
+  var status = document.getElementById('status');
+  var text = summary.value;
+  if (!text) { status.textContent = 'Please answer a few questions first.'; return; }
+  function fallback() {
+    summary.focus(); summary.select();
+    status.textContent = 'Text is selected. Please copy it with Ctrl+C or a long tap.';
+  }
+  try {
+    navigator.clipboard.writeText(text).then(function () { status.textContent = 'Copied. Now paste it into a message and send it.'; }, fallback);
+  } catch (e) { fallback(); }
+});
+update();
+</script>
+</body>
+</html>
