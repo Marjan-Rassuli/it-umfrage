@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IT-Fragebogen</title>
+<style>
+:root {
+  --bg: #F7F4EC; --surface: #FFFFFF; --fg: #14213D; --muted: #4A5570;
+  --line: #CFD3DC; --accent: #14213D; --on-accent: #FFFFFF; --mark: #B8860B;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1626; --surface: #18213A; --fg: #EEF1F8; --muted: #B4BCD0;
+    --line: #35405F; --accent: #FFC43D; --on-accent: #14213D; --mark: #FFC43D;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding: 32px max(16px, env(safe-area-inset-right, 0px)) 64px max(16px, env(safe-area-inset-left, 0px));
+}
+main { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; font-weight: 600; text-transform: uppercase; color: var(--mark); }
+h1 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 7vw, 42px); line-height: 1.1; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); max-width: 60ch; }
+.progress { position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 5; display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+.bar { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+h2 { margin: 12px 0 0; font-family: var(--font-display); font-size: 22px; }
+fieldset { margin: 0; padding: 18px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+legend { padding: 0 6px; font-weight: 600; font-size: 16px; max-width: 100%; }
+.hint { margin: -4px 0 2px; font-size: 13px; color: var(--muted); }
+.opt { display: flex; gap: 10px; align-items: center; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opt:hover { border-color: var(--accent); }
+.opt input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; margin: 0; }
+.opt:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.opt:has(input:focus-visible) { outline: 3px solid var(--mark); outline-offset: 2px; }
+textarea { width: 100%; min-height: 96px; padding: 10px 12px; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+textarea:focus-visible, button:focus-visible { outline: 3px solid var(--mark); outline-offset: 2px; }
+.result { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.result h2 { margin: 0; }
+#summary { min-height: 160px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+.actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+button { min-height: 44px; padding: 0 20px; font: inherit; font-weight: 600; color: var(--on-accent); background: var(--accent); border: 0; border-radius: 8px; cursor: pointer; }
+.status { font-size: 14px; color: var(--muted); }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap">
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Kurzbefragung · ca. 4 Minuten</div>
+    <h1>Wie läuft die IT bei Ihnen?</h1>
+    <p class="lead">Ich bin Studentin der Wirtschaftsinformatik und möchte verstehen, was kleine Betriebe und Vereine bei ihrer IT wirklich stört. Die Fragen sind zum Anklicken. Name und Kontakt sind freiwillig. Nichts wird automatisch gesendet: Am Ende kopieren Sie den Text und schicken ihn selbst an mich.</p>
+  </header>
+  <div class="progress" aria-live="polite"><div class="bar"><i id="fill"></i></div><span id="count">0 von 11</span></div>
+  <form id="form" autocomplete="off"></form>
+  <section class="result" aria-labelledby="res-h">
+    <h2 id="res-h">Ihre Antworten</h2>
+    <p class="note">Dieser Text entsteht aus Ihren Klicks. Sie können ihn vor dem Kopieren ergänzen oder ändern.</p>
+    <label for="summary" class="note">Text zum Senden</label>
+    <textarea id="summary" spellcheck="false"></textarea>
+    <div class="actions">
+      <button type="button" id="copy">Text kopieren</button>
+      <span class="status" id="status" role="status"></span>
+    </div>
+    <p class="note">Schicken Sie den kopierten Text per E-Mail oder Nachricht an die Person, die Ihnen diesen Link gegeben hat.</p>
+  </section>
+</main>
+<script>
+var QUESTIONS = [
+  { sec: 'Über Ihren Betrieb', id: 'art', type: 'one', q: 'Was für ein Betrieb sind Sie?',
+    opts: ['Verein oder Initiative', 'Laden oder Handel', 'Praxis', 'Büro, Beratung oder Studio', 'Etwas anderes'] },
+  { id: 'groesse', type: 'one', q: 'Wie viele Personen arbeiten regelmäßig am Computer?',
+    opts: ['1 bis 2', '3 bis 5', '6 bis 10', 'Mehr als 10'] },
+  { sec: 'Wie die IT heute läuft', id: 'kuemmerer', type: 'one', q: 'Wer kümmert sich bei Ihnen um die IT?',
+    opts: ['Ich selbst', 'Jemand nebenbei im Team', 'Ein externer Dienstleister', 'Eine Person aus dem Bekanntenkreis', 'Niemand richtig'] },
+  { id: 'system', type: 'one', q: 'Welches System nutzen Sie für E-Mail und gemeinsame Dateien?',
+    opts: ['Microsoft 365', 'Google Workspace', 'Etwas anderes', 'Ich weiß es nicht'] },
+  { id: 'backup', type: 'one', q: 'Gibt es regelmäßige Datensicherungen (Backups)?',
+    opts: ['Ja, und wir haben schon einmal getestet, ob sie funktionieren', 'Ja, aber getestet haben wir es nicht', 'Nein', 'Ich weiß es nicht'] },
+  { id: 'zweifaktor', type: 'one', q: 'Melden sich alle mit einem zweiten Schritt an (Zwei-Faktor-Anmeldung, zum Beispiel per App)?',
+    opts: ['Ja, alle', 'Nur einige', 'Nein', 'Ich weiß nicht, was das ist'] },
+  { id: 'passwort', type: 'one', q: 'Wie verwalten Sie Passwörter?',
+    opts: ['Passwortmanager', 'Im Kopf oder auf Zetteln', 'In einer gemeinsamen Tabelle oder Datei', 'Jeder macht es anders'] },
+  { sec: 'Was nervt', id: 'probleme', type: 'multi', q: 'Was davon kennen Sie?', hint: 'Mehrere Antworten sind möglich.',
+    opts: ['Störungen dauern zu lange', 'Unklar, wer auf was zugreifen darf', 'Angst vor Datenverlust', 'Verdächtige E-Mails (Phishing)', 'Datenschutz ist unübersichtlich', 'Neue Mitarbeitende einrichten ist mühsam', 'Technikerklärungen sind schwer verständlich', 'Nichts davon'] },
+  { id: 'nervt', type: 'text', q: 'Was nervt Sie an der IT am meisten? (freiwillig)' },
+  { sec: 'Wenn es Unterstützung gäbe', id: 'preis', type: 'one', q: 'Was wäre Ihnen eine monatliche IT-Betreuung ungefähr wert?',
+    opts: ['Kein Budget dafür', 'Bis 50 € im Monat', '50 bis 100 € im Monat', '100 bis 200 € im Monat', 'Mehr als 200 € im Monat', 'Kann ich nicht sagen'] },
+  { id: 'wichtig', type: 'multi', q: 'Was wäre Ihnen bei einer Betreuung wichtig?', hint: 'Bis zu drei Antworten.',
+    opts: ['Fester, klarer Preis', 'Schnelle Antwort bei Problemen', 'Verständliche Sprache', 'Jemand kommt vor Ort', 'Datenschutz und Verträge sind sauber geregelt', 'Dokumentation, wer was darf'] },
+  { id: 'kontakt', type: 'text', q: 'Möchten Sie einen kostenlosen Kurz-Check Ihrer IT? Dann schreiben Sie hier Namen und Kontakt. (freiwillig)' }
+];
+var state = {};
+var form = document.getElementById('form');
+var summary = document.getElementById('summary');
+var edited = false;
+
+function el(tag, attrs, kids) {
+  var e = document.createElement(tag);
+  Object.keys(attrs || {}).forEach(function (k) { if (k === 'text') e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); });
+  (kids || []).forEach(function (c) { e.appendChild(c); });
+  return e;
+}
+
+QUESTIONS.forEach(function (item) {
+  if (item.sec) form.appendChild(el('h2', { text: item.sec }));
+  var fs = el('fieldset', {});
+  fs.appendChild(el('legend', { text: item.q }));
+  if (item.hint) fs.appendChild(el('p', { class: 'hint', text: item.hint }));
+  if (item.type === 'text') {
+    var ta = el('textarea', { id: 'q-' + item.id, 'aria-label': item.q });
+    ta.addEventListener('input', function () { state[item.id] = ta.value.trim(); update(); });
+    fs.appendChild(ta);
+  } else {
+    item.opts.forEach(function (o, oi) {
+      var inp = el('input', { type: item.type === 'one' ? 'radio' : 'checkbox', name: 'q-' + item.id, id: 'q-' + item.id + '-' + oi, value: o });
+      inp.addEventListener('change', function () {
+        if (item.type === 'one') { state[item.id] = o; }
+        else {
+          var chosen = Array.prototype.slice.call(form.querySelectorAll('input[name="q-' + item.id + '"]:checked'));
+          if (item.id === 'wichtig' && chosen.length > 3) { inp.checked = false; chosen = chosen.filter(function (c) { return c !== inp; }); }
+          state[item.id] = chosen.map(function (c) { return c.value; });
+        }
+        update();
+      });
+      fs.appendChild(el('label', { class: 'opt', for: inp.id }, [inp, el('span', { text: o })]));
+    });
+  }
+  form.appendChild(fs);
+});
+
+function answered(item) {
+  var v = state[item.id];
+  return Array.isArray(v) ? v.length > 0 : !!v;
+}
+
+function buildText() {
+  var lines = ['Antworten zur IT-Kurzbefragung', ''];
+  QUESTIONS.forEach(function (item) {
+    var v = state[item.id];
+    if (!answered(item)) return;
+    lines.push(item.q.replace(' (freiwillig)', ''));
+    lines.push('→ ' + (Array.isArray(v) ? v.join('; ') : v));
+    lines.push('');
+  });
+  return lines.join('\n').trim();
+}
+
+function update() {
+  var n = QUESTIONS.filter(answered).length;
+  document.getElementById('count').textContent = n + ' von ' + QUESTIONS.length;
+  document.getElementById('fill').style.width = (100 * n / QUESTIONS.length) + '%';
+  if (!edited) summary.value = n ? buildText() : '';
+}
+summary.addEventListener('input', function () { edited = true; });
+summary.setAttribute('placeholder', 'Hier erscheinen Ihre Antworten, sobald Sie Fragen beantworten.');
+
+document.getElementById('copy').addEventListener('click', function () {
+  var status = document.getElementById('status');
+  var text = summary.value;
+  if (!text) { status.textContent = 'Beantworten Sie zuerst ein paar Fragen.'; return; }
+  function fallback() {
+    summary.focus(); summary.select();
+    status.textContent = 'Text ist markiert. Bitte mit Strg+C oder lange tippen kopieren.';
+  }
+  try {
+    navigator.clipboard.writeText(text).then(function () { status.textContent = 'Kopiert. Jetzt in eine Nachricht einfügen und senden.'; }, fallback);
+  } catch (e) { fallback(); }
+});
+update();
+</script>
+</body>
+</html>
